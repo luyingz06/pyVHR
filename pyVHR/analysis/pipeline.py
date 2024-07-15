@@ -332,6 +332,8 @@ class Pipeline():
             sig_processing.set_skin_extractor(SkinExtractionConvexHull(target_device))
         elif roi_method == 'faceparsing':
             sig_processing.set_skin_extractor(SkinExtractionFaceParsing(target_device))
+        elif roi_method == 'hsv':
+            sig_processing.set_skin_extractor(SkinExtractionHSV(target_device))
         else:
             raise ValueError("Unknown 'roi_method'")
               
@@ -1072,6 +1074,9 @@ class TestResult():
 
     def addData(self, key, value):
         self.dict[key] = value
+
+    def getData(self, key):
+        return self.dict[key]
 
 
     def saveResults(self, outFilename=None):

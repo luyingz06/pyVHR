@@ -327,3 +327,64 @@ class SkinExtractionConvexHull:
             skin_image = cupy.asnumpy(skin_image)
 
         return cropped_skin_im, skin_image
+    
+    
+class SkinExtractionHSV:
+    """
+        This class performs skin extraction on CPU using HSV thresholding.
+    """
+
+    def __init__(self, device='CPU'):
+        self.device = device
+
+    def extract_skin(self, image):
+        """
+        This method extract the skin from an image using hsv.
+
+        Args:
+            image (uint8 ndarray): ndarray with shape [rows, columns, rgb_channels].
+
+        Returns:
+            Cropped skin-image and non-cropped skin-image; both are uint8 ndarray with shape [rows, columns, rgb_channels].
+        """
+        img = image.copy()
+        # converting from RGB to BGR to HSV
+        temp = np.copy(img[:,:,0])
+        img[:,:,0] = img[:,:,2]
+        img[:,:,2] = temp
+
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+
+        # defining HSV thresholds
+        lower_threshold = np.array([0, 48, 80], dtype=np.uint8)
+        upper_threshold = np.array([20, 255, 255], dtype=np.uint8)
+
+        # single channel mask, denoting presence of colours in the about threshold
+        skin_mask = cv2.inRange(img, lower_threshold, upper_threshold)
+
+        # cleaning up mask using Gaussian Filter
+        skin_mask = cv2.GaussianBlur(skin_mask, (3, 3), 0)
+
+        # extracting skin from the threshold mask
+        skin = cv2.bitwise_and(img, img, mask=skin_mask)
+
+        # get the Skin image and convert it back to RGB
+        skin_image = cv2.cvtColor(skin, cv2.COLOR_HSV2RGB) # shape [rows, columns, 3]
+        temp = np.copy(skin_image[:,:,0])
+        skin_image[:,:,0] = skin_image[:,:,2]
+        skin_image[:,:,2] = temp
+
+        if self.device == 'GPU':
+            rmin, rmax, cmin, cmax = bbox2_GPU(skin_image)
+        else:
+            rmin, rmax, cmin, cmax = bbox2_CPU(skin_image)
+
+        cropped_skin_im = skin_image
+        if rmin >= 0 and rmax >= 0 and cmin >= 0 and cmax >= 0 and rmax-rmin >= 0 and cmax-cmin >= 0:
+            cropped_skin_im = skin_image[int(rmin):int(rmax), int(cmin):int(cmax)]
+
+        if self.device == 'GPU':
+            cropped_skin_im = cupy.asnumpy(cropped_skin_im)
+            skin_image = cupy.asnumpy(skin_image)
+
+        return cropped_skin_im, skin_image
