@@ -1,0 +1,6 @@
+devel_space: /home/luying/pyvhr_ws/devel
+install: false
+install_space: /home/luying/pyvhr_ws/install
+profile: default
+source_space: /home/luying/pyvhr_ws/src
+workspace: /home/luying/pyvhr_ws
